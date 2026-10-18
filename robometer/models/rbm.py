@@ -533,10 +533,19 @@ class RBM(PredictionHeadsMixin, PreTrainedModel):
             )
             if is_qwen3:
                 outputs = self.model(**model_kwargs, output_hidden_states=True, return_dict=True)
-                # Qwen3 uses hidden_states tuple, take the last layer
+                # Qwen3 uses hidden_states tuple, take the last layer.
+                # Test by value, not with hasattr: current transformers always
+                # defines .hidden_states and leaves it None unless the inner
+                # model emitted it, so hasattr is True and the index fails.
                 hidden_state = (
-                    outputs.hidden_states[-1] if hasattr(outputs, "hidden_states") else outputs.last_hidden_state
+                    outputs.hidden_states[-1]
+                    if getattr(outputs, "hidden_states", None) is not None
+                    else getattr(outputs, "last_hidden_state", None)
                 )
+                if hidden_state is None:
+                    raise RuntimeError(
+                        "model returned neither hidden_states nor last_hidden_state"
+                    )
             else:
                 outputs = self.model(**model_kwargs)
                 hidden_state = outputs.last_hidden_state  # [B, seq_len, hidden_dim]
@@ -628,10 +637,19 @@ class RBM(PredictionHeadsMixin, PreTrainedModel):
             )
             if is_qwen3:
                 outputs = self.model(**model_kwargs, output_hidden_states=True, return_dict=True)
-                # Qwen3 uses hidden_states tuple, take the last layer
+                # Qwen3 uses hidden_states tuple, take the last layer.
+                # Test by value, not with hasattr: current transformers always
+                # defines .hidden_states and leaves it None unless the inner
+                # model emitted it, so hasattr is True and the index fails.
                 hidden_state = (
-                    outputs.hidden_states[-1] if hasattr(outputs, "hidden_states") else outputs.last_hidden_state
+                    outputs.hidden_states[-1]
+                    if getattr(outputs, "hidden_states", None) is not None
+                    else getattr(outputs, "last_hidden_state", None)
                 )
+                if hidden_state is None:
+                    raise RuntimeError(
+                        "model returned neither hidden_states nor last_hidden_state"
+                    )
             else:
                 outputs = self.model(**model_kwargs)
                 hidden_state = outputs.last_hidden_state  # [B, seq_len, hidden_dim]
